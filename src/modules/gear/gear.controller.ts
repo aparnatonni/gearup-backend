@@ -5,11 +5,20 @@ import { gearService } from './gear.service';
 
 const getAllGear = catchAsync(async (req: Request, res: Response) => {
   const result = await gearService.getAllGear(req.query);
-  sendResponse(res, 200, {
-    success: true,
-    message: 'Gear items retrieved successfully',
-    data: result,
-  });
+  if (Array.isArray(result)) {
+    sendResponse(res, 200, {
+      success: true,
+      message: 'Gear items retrieved successfully',
+      data: result,
+    });
+  } else {
+    sendResponse(res, 200, {
+      success: true,
+      message: 'Gear items retrieved successfully',
+      data: result.items,
+      meta: result.meta,
+    });
+  }
 });
 
 const getGearById = catchAsync(async (req: Request, res: Response) => {
