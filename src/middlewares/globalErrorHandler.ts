@@ -27,6 +27,14 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     statusCode = 400;
     message = 'Duplicate value';
     errorDetails = { fields: err.meta?.target };
+  } else if (err?.code === 'P2003') {
+    statusCode = 409;
+    message = 'Related records exist';
+    errorDetails = { message: err.meta?.cause };
+  } else if (err?.code === 'P2034') {
+    statusCode = 409;
+    message = 'Booking conflict, please try again';
+    errorDetails = { message: err.meta?.cause };
   } else if (err?.code === 'P2025') {
     // Prisma "record not found" on update/delete
     statusCode = 404;

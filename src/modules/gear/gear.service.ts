@@ -81,6 +81,13 @@ const updateGear = async (gearId: string, providerId: string, payload: Prisma.Ge
 
 const deleteGear = async (gearId: string, providerId: string) => {
   await assertOwnership(gearId, providerId);
+  const [rentalItemCount, reviewCount] = await Promise.all([
+    prisma.rentalItem.count({ where: { gearItemId: gearId } }),
+    prisma.review.count({ where: { gearItemId: gearId } }),
+  ]);
+  if (rentalItemCount > 0 || reviewCount > 0) {
+    throw new AppError(409, 'This gear has rental history and cannot be deleted. Set available=false instead.');
+  }
   return prisma.gearItem.delete({ where: { id: gearId } });
 };
 
