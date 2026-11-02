@@ -39,9 +39,28 @@ const getAllRentalOrders = async () => {
   });
 };
 
+const createCategory = async (name: string) => {
+  return prisma.category.create({ data: { name } });
+};
+
+const updateCategory = async (id: string, name: string) => {
+  return prisma.category.update({ where: { id }, data: { name } });
+};
+
+const deleteCategory = async (id: string) => {
+  const gearCount = await prisma.gearItem.count({ where: { categoryId: id } });
+  if (gearCount > 0) {
+    throw new AppError(409, 'Category is in use by gear items and cannot be deleted');
+  }
+  return prisma.category.delete({ where: { id } });
+};
+
 export const adminService = {
   getAllUsers,
   updateUserStatus,
   getAllGear,
   getAllRentalOrders,
+  createCategory,
+  updateCategory,
+  deleteCategory,
 };

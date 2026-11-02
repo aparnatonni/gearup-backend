@@ -11,4 +11,8 @@ router.patch('/users/:id', auth('ADMIN'), validateRequest(adminValidation.update
 router.get('/gear', auth('ADMIN'), adminController.getAllGear);
 router.get('/rentals', auth('ADMIN'), adminController.getAllRentalOrders);
 
+router.post('/categories', auth('ADMIN'), validateRequest(adminValidation.createCategorySchema), adminController.createCategory);
+router.patch('/categories/:id', auth('ADMIN'), validateRequest(adminValidation.updateCategorySchema), adminController.updateCategory);
+router.delete('/categories/:id', auth('ADMIN'), validateRequest(adminValidation.deleteCategorySchema), adminController.deleteCategory);
+
 export const adminRoutes = router;
