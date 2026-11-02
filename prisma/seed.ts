@@ -6,8 +6,8 @@ const prisma = new PrismaClient();
 async function main() {
   // Admin credentials - these are what you submit for the assignment's
   // "Admin Credentials" requirement. Change the password before real use.
-  const adminEmail = 'admin@gearup.com';
-  const adminPassword = 'admin123';
+  const adminEmail = process.env.SEED_ADMIN_EMAIL || 'admin@gearup.com';
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD || 'admin123';
 
   const existingAdmin = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (!existingAdmin) {
