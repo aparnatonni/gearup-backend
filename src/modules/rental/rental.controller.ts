@@ -30,8 +30,18 @@ const getRentalOrderById = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const cancelRentalOrder = catchAsync(async (req: Request, res: Response) => {
+  const result = await rentalService.cancelRentalOrder(req.user!.id, req.params.id);
+  sendResponse(res, 200, {
+    success: true,
+    message: 'Rental order cancelled successfully',
+    data: result,
+  });
+});
+
 export const rentalController = {
   createRentalOrder,
   getMyRentalOrders,
   getRentalOrderById,
+  cancelRentalOrder,
 };

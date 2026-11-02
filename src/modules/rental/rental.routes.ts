@@ -9,5 +9,6 @@ const router = Router();
 router.post('/', auth('CUSTOMER'), validateRequest(rentalValidation.createRentalSchema), rentalController.createRentalOrder);
 router.get('/', auth('CUSTOMER'), rentalController.getMyRentalOrders);
 router.get('/:id', auth('CUSTOMER', 'PROVIDER', 'ADMIN'), rentalController.getRentalOrderById);
+router.patch('/:id/cancel', auth('CUSTOMER'), rentalController.cancelRentalOrder);
 
 export const rentalRoutes = router;

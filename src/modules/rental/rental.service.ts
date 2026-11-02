@@ -70,6 +70,29 @@ const createRentalOrder = async (customerId: string, payload: TCreateRentalPaylo
   }, { maxWait: 10000, timeout: 20000 });
 };
 
+const cancelRentalOrder = async (customerId: string, orderId: string) => {
+  const order = await prisma.rentalOrder.findUnique({
+    where: { id: orderId },
+    include: { payment: true },
+  });
+  if (!order) throw new AppError(404, 'Rental order not found');
+  if (order.customerId !== customerId) throw new AppError(403, 'You do not have access to this order');
+  if (order.status !== 'PLACED' && order.status !== 'CONFIRMED') {
+    throw new AppError(400, `Cannot cancel order in ${order.status} status`);
+  }
+
+  return prisma.$transaction(async (tx) => {
+    if (order.payment && order.payment.status === 'PENDING') {
+      await tx.payment.update({ where: { id: order.payment.id }, data: { status: 'FAILED' } });
+    }
+    return tx.rentalOrder.update({
+      where: { id: orderId },
+      data: { status: 'CANCELLED' },
+      include: { items: { include: { gearItem: true } }, payment: true },
+    });
+  });
+};
+
 const getMyRentalOrders = async (customerId: string) => {
   return prisma.rentalOrder.findMany({
     where: { customerId },
@@ -133,6 +156,7 @@ export const rentalService = {
   createRentalOrder,
   getMyRentalOrders,
   getRentalOrderById,
+  cancelRentalOrder,
   getProviderOrders,
   updateOrderStatus,
 };
