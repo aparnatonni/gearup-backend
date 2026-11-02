@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import config from '../config';
+import { prisma } from '../config/prisma';
 import AppError from '../errors/AppError';
 import catchAsync from '../utils/catchAsync';
 
@@ -35,11 +36,18 @@ const auth = (...allowedRoles: string[]) => {
       throw new AppError(401, 'Invalid or expired token');
     }
 
-    if (allowedRoles.length && !allowedRoles.includes(decoded.role)) {
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.id as string },
+      select: { id: true, role: true, status: true },
+    });
+    if (!user) throw new AppError(401, 'Invalid or expired token');
+    if (user.status === 'SUSPENDED') throw new AppError(403, 'Account suspended');
+
+    if (allowedRoles.length && !allowedRoles.includes(user.role)) {
       throw new AppError(403, 'You do not have permission to perform this action');
     }
 
-    req.user = decoded as JwtPayload & { id: string; role: string };
+    req.user = { ...decoded, id: user.id, role: user.role } as JwtPayload & { id: string; role: string };
     next();
   });
 };
