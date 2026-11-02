@@ -31,6 +31,15 @@ const createRentalOrder = async (customerId: string, payload: TCreateRentalPaylo
   const endDate = new Date(payload.endDate);
   const days = daysBetween(startDate, endDate);
 
+  // Reject duplicate gear items in the same request
+  const seenGear = new Set<string>();
+  for (const item of payload.items) {
+    if (seenGear.has(item.gearItemId)) {
+      throw new AppError(400, `Duplicate gear item ${item.gearItemId} in request`);
+    }
+    seenGear.add(item.gearItemId);
+  }
+
   // A transaction here means: if ANY step fails (e.g. item 2 of 3 is out of
   // stock), NOTHING is written - you never end up with a half-created order.
   return prisma.$transaction(async (tx) => {
@@ -41,9 +50,25 @@ const createRentalOrder = async (customerId: string, payload: TCreateRentalPaylo
       const gear = await tx.gearItem.findUnique({ where: { id: item.gearItemId } });
 
       if (!gear) throw new AppError(404, `Gear item ${item.gearItemId} not found`);
-      if (!gear.available) throw new AppError(400, `"${gear.name}" is not currently available`);
-      if (gear.quantity < item.quantity) {
-        throw new AppError(400, `Only ${gear.quantity} unit(s) of "${gear.name}" available`);
+      if (!gear.available) throw new AppError(400, `\"${gear.name}\" is not currently available`);
+
+      const reservedAgg = await tx.rentalItem.aggregate({
+        where: {
+          gearItemId: item.gearItemId,
+          rentalOrder: {
+            status: { in: [RentalStatus.PLACED, RentalStatus.CONFIRMED, RentalStatus.PAID, RentalStatus.PICKED_UP] },
+            startDate: { lt: endDate },
+            endDate: { gt: startDate },
+          },
+        },
+        _sum: { quantity: true },
+      });
+      const alreadyReserved = reservedAgg._sum.quantity || 0;
+      if (gear.quantity - alreadyReserved < item.quantity) {
+        throw new AppError(
+          400,
+          `Only ${gear.quantity - alreadyReserved} unit(s) of \"${gear.name}\" available for the selected dates`,
+        );
       }
 
       const lineTotal = gear.pricePerDay * item.quantity * days;
@@ -68,7 +93,7 @@ const createRentalOrder = async (customerId: string, payload: TCreateRentalPaylo
     });
 
     return order;
-  }, { maxWait: 10000, timeout: 20000 });
+  }, { isolationLevel: 'Serializable', maxWait: 10000, timeout: 20000 });
 };
 
 const cancelRentalOrder = async (customerId: string, orderId: string) => {
