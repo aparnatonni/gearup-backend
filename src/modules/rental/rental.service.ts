@@ -1,5 +1,6 @@
 import { RentalStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
+import { stripe } from '../../config/stripe';
 import AppError from '../../errors/AppError';
 
 type TCreateRentalPayload = {
@@ -79,6 +80,14 @@ const cancelRentalOrder = async (customerId: string, orderId: string) => {
   if (order.customerId !== customerId) throw new AppError(403, 'You do not have access to this order');
   if (order.status !== 'PLACED' && order.status !== 'CONFIRMED') {
     throw new AppError(400, `Cannot cancel order in ${order.status} status`);
+  }
+
+  if (order.payment && order.payment.status === 'PENDING') {
+    try {
+      await stripe.checkout.sessions.expire(order.payment.transactionId);
+    } catch {
+      // best-effort; ignore errors
+    }
   }
 
   return prisma.$transaction(async (tx) => {
