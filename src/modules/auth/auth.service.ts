@@ -49,16 +49,16 @@ const loginUser = async (email: string, password: string) => {
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (!user) {
-    throw new AppError(404, 'No account found with this email');
-  }
-
-  if (user.status === 'SUSPENDED') {
-    throw new AppError(403, 'This account has been suspended. Contact support.');
+    throw new AppError(401, 'Invalid email or password');
   }
 
   const passwordMatches = await bcrypt.compare(password, user.password);
   if (!passwordMatches) {
-    throw new AppError(401, 'Incorrect password');
+    throw new AppError(401, 'Invalid email or password');
+  }
+
+  if (user.status === 'SUSPENDED') {
+    throw new AppError(403, 'This account has been suspended. Contact support.');
   }
 
   const token = jwt.sign(

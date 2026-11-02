@@ -23,6 +23,13 @@ const createReview = async (customerId: string, payload: TCreateReviewPayload) =
     throw new AppError(400, 'You can only review gear you have rented and returned');
   }
 
+  const existingReview = await prisma.review.findUnique({
+    where: { customerId_gearItemId: { customerId, gearItemId: payload.gearItemId } },
+  });
+  if (existingReview) {
+    throw new AppError(400, 'You have already reviewed this gear');
+  }
+
   return prisma.review.create({
     data: {
       customerId,
