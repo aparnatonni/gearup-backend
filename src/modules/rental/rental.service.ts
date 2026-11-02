@@ -90,6 +90,10 @@ const getRentalOrderById = async (id: string, userId: string, role: string) => {
   if (role === 'CUSTOMER' && order.customerId !== userId) {
     throw new AppError(403, 'You do not have access to this order');
   }
+  if (role === 'PROVIDER') {
+    const ownsAnItem = order.items.some((item) => item.gearItem.providerId === userId);
+    if (!ownsAnItem) throw new AppError(403, 'You do not have access to this order');
+  }
   return order;
 };
 
