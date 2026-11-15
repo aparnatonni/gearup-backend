@@ -2,7 +2,7 @@
 
 REST API for a sports & outdoor gear rental platform. Built for the Programming Hero / Apollo Backend Assignment 4.
 
-Live URL: <add-render-url>
+Live URL: https://gearup-backend-1-2w94.onrender.com
 
 ## Tech Stack
 
@@ -42,8 +42,6 @@ npx prisma db seed
 npm run dev
 ```
 
-Server runs on `http://localhost:5000` by default.
-
 ## Environment Variables
 
 See `.env.example` for the full list. You'll need:
@@ -51,13 +49,6 @@ See `.env.example` for the full list. You'll need:
 - A [Stripe](https://dashboard.stripe.com) test-mode secret key
 - For local webhook testing: [Stripe CLI](https://stripe.com/docs/stripe-cli) — `stripe listen --forward-to localhost:5000/api/payments/webhook`
 - Optional: `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`
-
-## Admin Credentials
-
-Created automatically by the seed script:
-
-- Email: `admin@gearup.com`
-- Password: `admin123`
 
 ## Endpoint Table
 
